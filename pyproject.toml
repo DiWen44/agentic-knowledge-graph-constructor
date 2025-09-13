@@ -1,0 +1,11 @@
+[project]
+name = "rag-graph-constructor"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-genai>=1.36.0",
+    "langgraph>=0.6.7",
+    "neo4j>=5.28.2",
+]
