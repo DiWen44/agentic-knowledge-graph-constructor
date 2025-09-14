@@ -1,8 +1,6 @@
 from io import BytesIO
-from typing import Annotated, TypedDict, List
 from dataclasses import dataclass
-
-from langgraph.graph.message import add_messages
+from typing import Literal, Dict
 import pandas as pd
 from markitdown import MarkItDown
 
@@ -49,10 +47,18 @@ class UnstructuredFile():
         return cls(name=file.name, doc_title=conversion.title, content=conversion.markdown)
 
 
-class AgentsState(TypedDict):
+@dataclass
+class Message():
+    """ 
+    Represents a message sent by either the user or the top-level conversational agent
+    (i.e. "the ai") in the streamlit application
     """
-    State object for the langGraph graph.
-    """
-    messages: Annotated[list, add_messages]
-    csv_files: List[CSVFile]
-    unstructured_files: List[UnstructuredFile]
+    role: Literal["human", "ai"]
+    content: str
+
+    def to_dict(self) -> Dict[str, str]:
+        """ Returns the message as a dictionary that can be passed to langgraph graph invocations"""
+        return {
+            'role': self.role,
+            'content': self.content
+        }

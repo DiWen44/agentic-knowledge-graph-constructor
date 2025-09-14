@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit_callbacks as callbacks
 
+st.session_state.initialized = False
 with st.sidebar:
     st.title("Agentic Knowledge Graph Constructor")
     st.text("This is a multi-agent system that automates the creation\nof a knowledge graph from provided structured and\nunstructured data files.")
