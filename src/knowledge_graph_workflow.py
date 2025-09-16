@@ -1,56 +1,55 @@
-from typing import TypedDict, List, Annotated
-from schema import CSVFile, UnstructuredFile, Message
-from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.runtime import get_runtime
+from typing import List, TypedDict
+from agno.workflow import Workflow, Step, Loop, StepOutput
 
-
-class State(TypedDict):
-    """
-    State object schema for the langGraph graph.
-    """
-    messages: Annotated[list, add_messages]
-
-
-class Context(TypedDict):
-    """
-    Context object schema for the langGraph graph. 
-    Holds persistent immutable static context data 
-    """
-    csv_files: List[CSVFile]
-    unstructured_files: List[UnstructuredFile]
-
-
-def output_context(state: State):
-    ctx = get_runtime(Context).context
-    print(ctx['csv_files'])
+from schema import CSVFile, UnstructuredFile, Message, UserGoal
+from user_intent import propose_user_goal, get_user_input
 
 
 class KnowledgeGraphCreationWorkflow():
     """
-    Wrapper class for the top-level langgraph workflow.
+    Wrapper class for the top-level knowledge graph creation workflow
     """
 
-    context: Context
-    graph: StateGraph
+    class State(TypedDict):
+        """ 
+        Session state dict schema for the agno workflow. 
+        Attributes:
+            csv_files - CSV (structured) files provided by user
+            unstructured_files - Unstructured files (i.e. "txt", "pdf", "md", "docx", "html") provided by user
+            user_goal - finalized/approved user's objective, initially empty/none but set by user intent loop
 
-    def __init__(self, 
-        csv_files: List[CSVFile], 
+        """
+        csv_files: List[CSVFile]
         unstructured_files: List[UnstructuredFile]
-    ) -> None:
+        user_goal: UserGoal = None 
+
+
+    def __init__(self, csv_files: List[CSVFile], unstructured_files: List[UnstructuredFile]) -> None:
         
-        self.graph = StateGraph(state_schema=State, context_schema=Context)
-        self.context = Context(csv_files=csv_files, unstructured_files=unstructured_files)
-
-        self.graph.add_node("output_state", output_context)
-        self.graph.add_edge(START, "output_state")
-        self.graph.add_edge("output_state", END)
+        # Callback for terminating user intent loop - based on if user has approved the proposed user goal 
+        def user_goal_approved(step_outputs: List[StepOutput]):
+            return step_outputs[-1].content.goal_approved
     
+        self.workflow = Workflow(
+            name="knowledge-graph-creation-workflow",
+            session_state=self.State(csv_files=csv_files, unstructured_files=unstructured_files),
+            steps=[
+                Loop(
+                    name="user-intent-loop",
+                    steps=[
+                        Step(name="propose-user-goal", executor=propose_user_goal),
+                        Step(name="get-user-input", executor=get_user_input)
 
-    def run(self, message: Message) -> None:
-        """ Invoke the graph on an initial user-provided message """
-        compiled_graph = self.graph.compile()
-        compiled_graph.invoke({"messages": [message.to_dict()]}, context=self.context)
+                    ],
+                    end_condition=user_goal_approved,
+                    max_iterations=10
+                )
+            ],
+        )
+
+
+    async def run(self, message: Message) -> None:
+        response = await self.workflow.arun(input=message.content)
 
     
     

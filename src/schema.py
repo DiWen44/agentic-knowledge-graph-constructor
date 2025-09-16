@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Literal, Dict
 import pandas as pd
 from markitdown import MarkItDown
+from pydantic import BaseModel
 
 
 @dataclass
@@ -62,3 +63,14 @@ class Message():
             'role': self.role,
             'content': self.content
         }
+    
+
+class UserGoal(BaseModel):
+    """ 
+    A user goal ascertained by the user intent agent in the top-level knowledge graph workflow. 
+    Attributes:
+        kind_of_graph - a few words stating the purpose of the graph (e.g. USA freight logistics)
+        description - a short description of the intention of the graph e.g. "A dynamic routing and delivery system for cargo."
+    """
+    kind_of_graph: str
+    description: str

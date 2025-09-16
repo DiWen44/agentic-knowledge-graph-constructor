@@ -1,7 +1,9 @@
+import logging
+import asyncio
 import streamlit as st
+
 from schema import CSVFile, UnstructuredFile, Message
 from knowledge_graph_workflow import KnowledgeGraphCreationWorkflow
-import logging
 
 
 def on_files_submit():
@@ -22,6 +24,10 @@ def on_files_submit():
         csv_files=st.session_state.csv_files,
         unstructured_files=st.session_state.unstructured_files
     )
+
+    # Initialize async event for indicated when user sends message
+    # Cleared when we finish retrieving the user's latest message
+    st.session_state.USER_SENT_MESSAGE = asyncio.Event()
 
 
 def on_msg_submit():
@@ -48,4 +54,15 @@ def on_msg_submit():
         with st.chat_message(message.role):
             st.markdown(message.content)
 
-    st.session_state.workflow.run(latest_message)
+    # Run workflow if this is user's 1st message
+    if len(st.session_state.messages) == 1:
+        # Run workflow inside streamlit's event loop
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            st.session_state.workflow.run(latest_message)
+        )
+    
+    st.session_state.USER_SENT_MESSAGE.set()
+
+
+        

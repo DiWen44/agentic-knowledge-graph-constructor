@@ -1,5 +1,9 @@
 import streamlit as st
 import streamlit_callbacks as callbacks
+import nest_asyncio
+
+# Streamlit runs it's own async event loop - use nest_asyncio to have our event loop run inside it
+nest_asyncio.apply()
 
 st.session_state.initialized = False
 with st.sidebar:
