@@ -5,7 +5,7 @@ from schema import CSVFile, UnstructuredFile, Message, UserGoal
 from user_intent import propose_user_goal, get_user_input
 
 
-class KnowledgeGraphCreationWorkflow():
+class KnowledgeGraphCreationWorkflow:
     """
     Wrapper class for the top-level knowledge graph creation workflow
     """
@@ -31,14 +31,14 @@ class KnowledgeGraphCreationWorkflow():
             return step_outputs[-1].content.goal_approved
     
         self.workflow = Workflow(
-            name="knowledge-graph-creation-workflow",
+            name='knowledge-graph-creation-workflow',
             session_state=self.State(csv_files=csv_files, unstructured_files=unstructured_files),
             steps=[
                 Loop(
-                    name="user-intent-loop",
+                    name='user-intent-loop',
                     steps=[
-                        Step(name="propose-user-goal", executor=propose_user_goal),
-                        Step(name="get-user-input", executor=get_user_input)
+                        Step(name='propose-user-goal', executor=propose_user_goal),
+                        Step(name='get-user-input', executor=get_user_input)
 
                     ],
                     end_condition=user_goal_approved,
@@ -49,10 +49,4 @@ class KnowledgeGraphCreationWorkflow():
 
 
     async def run(self, message: Message) -> None:
-        response = await self.workflow.arun(input=message.content)
-
-    
-    
-
-
-    
+        response = await self.workflow.arun(input=message['content'])

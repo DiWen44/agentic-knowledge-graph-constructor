@@ -1,9 +1,9 @@
 from io import BytesIO
 from dataclasses import dataclass
-from typing import Literal, Dict
+from typing import Literal, TypedDict
 import pandas as pd
 from markitdown import MarkItDown
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 @dataclass
@@ -19,9 +19,14 @@ class CSVFile():
     content: pd.DataFrame
 
     @classmethod
-    def from_bytesIO(cls, file: BytesIO) -> "CSVFile":
-        """ Constructs from a BytesIO object, of which streamlit's UploadedFile is a subclass """
-        return cls(name=file.name, content=pd.read_csv(file))
+    def from_bytesIO(cls, name: str, file: BytesIO) -> "CSVFile":
+        """
+        Constructs from a bytesIO stream object 
+        Args:
+            name: name of the file, including extension
+            file: a bytesIO object
+        """
+        return cls(name=name, content=pd.read_csv(file))
 
 
 @dataclass
@@ -41,28 +46,24 @@ class UnstructuredFile():
     content: str
 
     @classmethod
-    def from_bytesIO(cls, file: BytesIO) -> "UnstructuredFile":
-        """ Constructs from a BytesIO object, of which streamlit's UploadedFile is a subclass """
+    def from_bytesIO(cls, name: str, file: BytesIO) -> "UnstructuredFile":
+        """
+        Constructs from a bytesIO stream object 
+        Args:
+            name: name of the file, including extension
+            file: a bytesIO object
+        """
         md = MarkItDown()
         conversion = md.convert(file)
-        return cls(name=file.name, doc_title=conversion.title, content=conversion.markdown)
+        return cls(name=name, doc_title=conversion.title, content=conversion.markdown)
 
 
-@dataclass
-class Message():
+class Message(TypedDict):
     """ 
-    Represents a message sent by either the user or the top-level conversational agent
-    (i.e. "the ai") in the streamlit application
+    Represents a message sent by either the user or the top-level conversational agent in the flask app.
     """
-    role: Literal["human", "ai"]
+    sender: Literal["user", "agent"]
     content: str
-
-    def to_dict(self) -> Dict[str, str]:
-        """ Returns the message as a dictionary that can be passed to langgraph graph invocations"""
-        return {
-            'role': self.role,
-            'content': self.content
-        }
     
 
 class UserGoal(BaseModel):
@@ -72,5 +73,5 @@ class UserGoal(BaseModel):
         kind_of_graph - a few words stating the purpose of the graph (e.g. USA freight logistics)
         description - a short description of the intention of the graph e.g. "A dynamic routing and delivery system for cargo."
     """
-    kind_of_graph: str
-    description: str
+    kind_of_graph: str = Field(description="A few words stating the purpose of the graph")
+    description: str = Field(description="A short description of the intention of the graph")

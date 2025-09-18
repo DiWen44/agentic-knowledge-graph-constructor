@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from textwrap import dedent
 import os
 from agno.workflow import StepInput, StepOutput
@@ -6,8 +6,7 @@ from agno.agent import Agent
 from agno.models.google.gemini import Gemini
 
 from schema import UserGoal, Message
-from streamlit_utils import write_to_streamlit, get_latest_user_message
-
+from signalling import get_latest_user_message, write_agent_message_to_session
 
 class UserIntentAgentOutputSchema(BaseModel):
     """
@@ -18,9 +17,9 @@ class UserIntentAgentOutputSchema(BaseModel):
         proposed_goal - the proposed user goal the agent has come up with
         goal_approved - if proposed goal has been approved by the user
     """
-    llm_message: str
-    proposed_goal: UserGoal | None = None
-    goal_approved: bool = False
+    llm_message: str = Field(description="Natural language text that the LLM generates as part of it's response")
+    proposed_goal: UserGoal | None = Field(default=None, description="The proposed user goal")
+    goal_approved: bool = Field(default=False, description="Whether the proposed goal has been approved by the user")
 
 
 class UserIntentLoopState(BaseModel):
@@ -28,13 +27,13 @@ class UserIntentLoopState(BaseModel):
     A state object that gets passed as input & output content of the steps in the loop
 
     Attributes:
-        proposed_goal - The proposed user goal the user intent agent has come up with
         user_input - At first the initial user prompt to the whole workflow, then user feedback on the proposed goal when the agent generates a goal proposal
+        proposed_goal - The proposed user goal the user intent agent has come up with
         goal_approved - if proposed goal has been approved by the user
     """
-    proposed_goal: UserGoal | None = None
-    user_input: str
-    goal_approved: bool = False
+    user_input: str = Field(description="The latest user input/feedback")
+    proposed_goal: UserGoal | None = Field(default=None, description="The proposed user goal")
+    goal_approved: bool = Field(default=False, description="Whether the proposed goal has been approved by the user")
 
 
 async def propose_user_goal(step_input: StepInput, session_state) -> StepOutput:
@@ -87,7 +86,7 @@ async def propose_user_goal(step_input: StepInput, session_state) -> StepOutput:
         \tkind of graph: {response.content.proposed_goal.kind_of_graph}\n
         \tdescription: {response.content.proposed_goal.description}
         """
-    write_to_streamlit(streamlit_message)
+    write_agent_message_to_session(streamlit_message)
 
     # Update workflow session state with approved goal
     if response.content.goal_approved:
@@ -118,7 +117,7 @@ async def get_user_input(step_input: StepInput) -> StepOutput:
     return StepOutput(
         content=UserIntentLoopState(
             proposed_goal=state.proposed_goal, 
-            user_input=user_input.content,
+            user_input=user_input['content'],
             goal_approved=False
         )
     )
