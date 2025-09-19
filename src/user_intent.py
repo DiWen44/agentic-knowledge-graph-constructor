@@ -67,7 +67,7 @@ class UserIntentLoop():
 
         self.agent = Agent(
             name="user-intent-agent",
-            model=Gemini(id="gemini-2.5-flash-lite", api_key=os.getenv("GOOGLE_API_KEY")),
+            model=Gemini(id="gemini-2.5-flash-lite"),
             input_schema=self.LoopState,
             output_schema=self.AgentOutputSchema,
             instructions=dedent("""
