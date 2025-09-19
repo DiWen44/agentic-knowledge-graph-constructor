@@ -1,8 +1,8 @@
 from typing import List, TypedDict
-from agno.workflow import Workflow, Step, Loop, StepOutput
+from agno.workflow import Workflow
 
 from schema import CSVFile, UnstructuredFile, Message, UserGoal
-from user_intent import propose_user_goal, get_user_input
+from user_intent import UserIntentLoop
 
 
 class KnowledgeGraphCreationWorkflow:
@@ -25,25 +25,12 @@ class KnowledgeGraphCreationWorkflow:
 
 
     def __init__(self, csv_files: List[CSVFile], unstructured_files: List[UnstructuredFile]) -> None:
-        
-        # Callback for terminating user intent loop - based on if user has approved the proposed user goal 
-        def user_goal_approved(step_outputs: List[StepOutput]):
-            return step_outputs[-1].content.goal_approved
     
         self.workflow = Workflow(
             name='knowledge-graph-creation-workflow',
             session_state=self.State(csv_files=csv_files, unstructured_files=unstructured_files),
             steps=[
-                Loop(
-                    name='user-intent-loop',
-                    steps=[
-                        Step(name='propose-user-goal', executor=propose_user_goal),
-                        Step(name='get-user-input', executor=get_user_input)
-
-                    ],
-                    end_condition=user_goal_approved,
-                    max_iterations=10
-                )
+                UserIntentLoop().get_loop()
             ],
         )
 

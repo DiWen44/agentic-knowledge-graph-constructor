@@ -6,6 +6,7 @@ and unstructured data files. Additionally, it provides an API endpoint for retri
 ## Frameworks/Tools used
 
 - Gemini 2.5 Flash-Lite as the core LLM for the agents
-- Langgraph to create agents & workflows
+- Agno to create agents & workflows
 - Neo4J AuraDB as the graph DB
-- Streamlit for the UI
+- Flask for the web app
+- Redis for serverside sessions

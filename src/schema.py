@@ -1,6 +1,6 @@
 from io import BytesIO
 from dataclasses import dataclass
-from typing import Literal, TypedDict
+from typing_extensions import Literal, TypedDict
 import pandas as pd
 from markitdown import MarkItDown
 from pydantic import BaseModel, Field
@@ -62,7 +62,7 @@ class Message(TypedDict):
     """ 
     Represents a message sent by either the user or the top-level conversational agent in the flask app.
     """
-    sender: Literal["user", "agent"]
+    sender: Literal['user', 'agent']
     content: str
     
 
