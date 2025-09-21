@@ -1,13 +1,12 @@
 from typing import List
 from pydantic import BaseModel, Field
 from textwrap import dedent
-import os
 from agno.workflow import  Loop, Step, StepInput, StepOutput
 from agno.agent import Agent
 from agno.models.google.gemini import Gemini
 
-from schema import UserGoal, Message
-from message_handling import get_latest_user_message, write_agent_message_to_session
+from ..common.schema import UserGoal, Message
+from ..common.message_handling import get_latest_user_message, write_agent_message_to_session
 
 
 class UserIntentLoop():
@@ -63,7 +62,6 @@ class UserIntentLoop():
 
 
     def __init__(self, max_iterations: int = 10) -> None:
-
 
         self.agent = Agent(
             name="user-intent-agent",

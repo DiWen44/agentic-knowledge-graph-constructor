@@ -1,5 +1,5 @@
 from flask import session
-from schema import Message
+from .schema import Message
 
 
 async def get_latest_user_message() -> Message:

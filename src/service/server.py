@@ -1,11 +1,10 @@
-import secrets
 import logging
 from flask import Flask, redirect, request, render_template, session
 from flask_session import Session
 from redis import Redis
 
-from schema import Message, CSVFile, UnstructuredFile
-from knowledge_graph_workflow import KnowledgeGraphCreationWorkflow
+from ..common.schema import Message, CSVFile, UnstructuredFile
+from ..workflow.knowledge_graph_workflow import KnowledgeGraphCreationWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +27,22 @@ def root():
 def upload_files():
 
     # Initialize session storage for files & a message history list
-    session['csv_files'] = []
-    session['unstructured_files'] = []
+    session['csv_files'] = {} # Map of filename string (with '.csv' extension) -> CSVFile
+    session['unstructured_files'] = {} # Map of filename string (with extension) -> UnstructuredFile
     session['messages'] = []
 
     for file in request.files.getlist("fileUploader"):
 
         if file.filename.endswith('.csv'): # CSV files
             csv_file = CSVFile.from_bytesIO(file.filename, file.stream._file)
-            session['csv_files'].append(csv_file)
+            session['csv_files'][file.filename] = csv_file
 
         else: # Unstructured files
             unstructured_file = UnstructuredFile.from_bytesIO(file.filename, file.stream._file)
-            session['unstructured_files'].append(unstructured_file)
+            session['unstructured_files'][file.filename] = unstructured_file
 
-    logger.info(f"CSV FILES: { [file.name for file in session['csv_files']]}")
-    logger.info(f"UNSTRUCTURED FILES: { [file.name for file in session['unstructured_files']] }")
+    logger.info(f"CSV FILES: { [filename for filename in session['csv_files'].keys()]}")
+    logger.info(f"UNSTRUCTURED FILES: { [filename for filename in session['unstructured_files'].keys()] }")
 
     """
     # Initialize top-level workflow and store in session
@@ -59,7 +58,7 @@ def upload_files():
 def chat():
     return render_template(
         "chat.html", 
-        messages=[message for message in session.get('messages', [])]
+        messages=[message for message in session['messages']]
     )
 
 

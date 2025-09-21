@@ -1,22 +1,16 @@
 from io import BytesIO
-from dataclasses import dataclass
-from typing_extensions import Literal, TypedDict
-import pandas as pd
+from typing_extensions import Literal, TypedDict, List
 from markitdown import MarkItDown
+from dataclasses import dataclass
 from pydantic import BaseModel, Field
 
 
 @dataclass
 class CSVFile():
-    """
-    A structured CSV file provided by the user - The content is stored as a pandas dataframe.
-
-    ATTRIBUTES:
-        name: filename, including file extension (i.e. ".csv")
-        content: CSV contents as a pandas dataframe
-    """
-    name: str
-    content: pd.DataFrame
+    """ A structured CSV file provided by the user """
+    name: str = Field(description="Filename, including file extension (i.e. .csv)")
+    column_names: str = Field(description="The column names of the CSV file i.e. the first row of the file, as a single comma-separated string")
+    rows: List[str] = Field(description="The rows of the CSV file, each row as a single comma-separated string of cell values")
 
     @classmethod
     def from_bytesIO(cls, name: str, file: BytesIO) -> "CSVFile":
@@ -26,7 +20,10 @@ class CSVFile():
             name: name of the file, including extension
             file: a bytesIO object
         """
-        return cls(name=name, content=pd.read_csv(file))
+        content = file.readlines()
+        column_names = content[0].decode('utf-8').strip()
+        rows = [line.decode('utf-8').strip() for line in content[1:]]
+        return cls(name=name, column_names=column_names, rows=rows)
 
 
 @dataclass
@@ -35,15 +32,10 @@ class UnstructuredFile():
     An unstructured text-based file provided by the user.
     Can be of formats "txt", "pdf", "md", "docx", "html".
     For later convenience, the file content is converted to markdown here.
-
-    ATTRIBUTES:
-        name: filename, including file extension
-        doc_title: Title of the document ascertained from text, if any
-        content: Markdown formatted doc content
     """
-    name: str
-    doc_title: str
-    content: str
+    name: str = Field(description="Filename, including file extension (e.g. .txt, .pdf, .md, .docx, .html)")
+    doc_title: str | None = Field(default=None,description="Title of the document ascertained from text, if any")
+    content: str = Field(description="Markdown formatted doc content")
 
     @classmethod
     def from_bytesIO(cls, name: str, file: BytesIO) -> "UnstructuredFile":
@@ -60,9 +52,9 @@ class UnstructuredFile():
 
 class Message(TypedDict):
     """ 
-    Represents a message sent by either the user or the top-level conversational agent in the flask app.
+    Represents a message sent by either the user, an agent in the system, or a system notification.
     """
-    sender: Literal['user', 'agent']
+    sender: Literal['user', 'agent', 'system']
     content: str
     
 
