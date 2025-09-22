@@ -1,7 +1,8 @@
 from typing import Dict, TypedDict
 from agno.workflow import Workflow, Step, StepInput, StepOutput
 
-from src.common.schema import CSVFile, UserGoal
+from src.common import UserGoal
+from src.common.structured import CSVFile
 
 class CSVWorkflow:
     """

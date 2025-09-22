@@ -1,12 +1,10 @@
 from typing import List
 from pydantic import BaseModel, Field
-from textwrap import dedent
 from agno.workflow import  Loop, Step, StepInput, StepOutput
-from agno.agent import Agent
-from agno.models.google.gemini import Gemini
 
-from src.common.schema import CSVFile, UserGoal, Message
-from src.common.message_handling import get_latest_user_message
+from src.common import UserGoal
+from src.common.structured import CSVFile
+from src.common.message import Message, get_latest_user_message
 
 from .schema_critic_loop import SchemaCriticLoop
 

@@ -1,7 +1,10 @@
-from typing import Dict, TypedDict
+from typing_extensions import Dict, TypedDict
 from agno.workflow import Workflow
 
-from ..common.schema import CSVFile, UnstructuredFile, Message, UserGoal
+from ..common import UserGoal
+from ..common.structured import CSVFile
+from ..common.unstructured import UnstructuredFile
+from ..common.message import Message
 from .user_intent import UserIntentLoop
 
 

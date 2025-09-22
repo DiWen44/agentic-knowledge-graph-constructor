@@ -1,13 +1,12 @@
-from typing import List
+from typing_extensions import List
 from pydantic import BaseModel, Field
 from textwrap import dedent
 from agno.workflow import  Loop, Step, StepInput, StepOutput
 from agno.agent import Agent
 from agno.models.google.gemini import Gemini
 
-from ..common.schema import UserGoal, Message
-from ..common.message_handling import get_latest_user_message, write_agent_message_to_session
-
+from ..common.message import Message, get_latest_user_message, write_agent_message_to_session
+from ..common import UserGoal
 
 class UserIntentLoop():
     """

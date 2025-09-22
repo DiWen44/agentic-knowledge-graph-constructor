@@ -1,5 +1,13 @@
 from flask import session
-from .schema import Message
+from typing_extensions import Literal, TypedDict
+
+
+class Message(TypedDict):
+    """ 
+    Represents a message sent by either the user, an agent in the system, or a system notification.
+    """
+    sender: Literal['user', 'agent', 'system']
+    content: str
 
 
 async def get_latest_user_message() -> Message:
@@ -15,7 +23,6 @@ async def get_latest_user_message() -> Message:
     # TODO: Replace with actual async message retrieval from Flask session
     msg = input("> ")
     return Message(sender='user', content=msg)
-
 
 
 def write_agent_message_to_session(msg: str) -> None:

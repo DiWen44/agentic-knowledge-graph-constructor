@@ -3,7 +3,9 @@ from flask import Flask, redirect, request, render_template, session
 from flask_session import Session
 from redis import Redis
 
-from ..common.schema import Message, CSVFile, UnstructuredFile
+from ..common.structured import CSVFile
+from ..common.unstructured import UnstructuredFile
+from ..common.message import Message
 from ..workflow.knowledge_graph_workflow import KnowledgeGraphCreationWorkflow
 
 logger = logging.getLogger(__name__)
