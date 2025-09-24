@@ -2,6 +2,7 @@ from io import BytesIO
 from typing_extensions import List
 from dataclasses import dataclass
 from pydantic import BaseModel, Field
+import pandas as pd
 
 @dataclass
 class CSVFile():
@@ -9,12 +10,10 @@ class CSVFile():
     A structured CSV file provided by the user.
     Attributes:
         name - filename, including file extension (i.e. .csv)
-        column_names - the column names of the CSV file i.e. the first row of the file, as a single comma-separated string
-        rows - the rows of the CSV file, each row as a single comma-separated string of cell values
+        content - The CSV file loaded as a pandas DataFrame
     """
     name: str
-    column_names: str
-    rows: List[str]
+    content: pd.DataFrame
 
     @classmethod
     def from_bytesIO(cls, name: str, file: BytesIO) -> "CSVFile":
@@ -24,10 +23,9 @@ class CSVFile():
             name: name of the file, including extension
             file: a bytesIO object
         """
-        content = file.readlines()
-        column_names = content[0].decode('utf-8').strip()
-        rows = [line.decode('utf-8').strip() for line in content[1:]]
-        return cls(name=name, column_names=column_names, rows=rows)
+        file.seek(0) # Move file pointer to start of file
+        content = pd.read_csv(file)
+        return cls(name=name, content=content)
 
     def sample(self) -> List[str]:
         """
@@ -37,8 +35,10 @@ class CSVFile():
             list[str]: The first 11 lines of the csv file: The first line has the column headers, subsequent 10 lines have the data.
                 Each line is a single comma-separated string.
         """
-        return [self.column_names] + self.rows[:10]
-    
+        columns = ",".join(self.content.columns.values.tolist())
+        rows = self.content.iloc[:10].apply(lambda x: ",".join(x.astype(str)), axis=1).tolist()
+        return [columns] + rows 
+
 
 class EntityType(BaseModel):
     """ 

@@ -63,10 +63,10 @@ class SchemaCriticLoop():
             You'll also be given feedback from a critic agent on a previous proposed schema. Use this to refine the schema.
 
             A knowledge graph schema consists of 2 lists:
-            - a list of entity types (nodes) (e.g. Person, Company, Product)
-            - a list of relationship types (edges). Each relationship type is a list of [SOURCE_ENTITY_TYPE, RELATIONSHIP_TYPE, DESTINATION_ENTITY_TYPE], 
-                thus specifying the concerned entity types as well as the nature of the relationship itself.
-                e.g. [Person, WORKS_AT, Company], [Product, MANUFACTURED_BY, Company]
+            - a list of entity types (nodes) (e.g. Person, Company, Product). These have fields/attributes (e.g. for Person, fields could be name, age, address).
+            - a list of relationship types (edges). Each relationship type is represented by 3 components: SOURCE_ENTITY_TYPE, RELATIONSHIP_TYPE, DESTINATION_ENTITY_TYPE;
+                thus specifying the concerned entity types as well as the nature of the relationship itself. e.g. [Person, WORKS_AT, Company], [Product, MANUFACTURED_BY, Company].
+                Relationships do not have their own fields/attribute lists.
                 
             Note that you are not being asked to extract instances of entities (e.g Joe, Mark, Devin) or relationships (e.g. Joe likes Mark), just the high-level entity types and relationship types.
 
@@ -80,26 +80,38 @@ class SchemaCriticLoop():
             ## General guidance for identifying a node or a relationship
             - If the file name is singular and has only 1 unique identifier it is likely a node
             - If the file name is a combination of two things, it is likely a full relationship
-            - If the file name sounds like a node, but there are multiple unique identifiers, that is likely a node with reference relationships
+            - If the file name sounds like a node, but there are multiple unique identifiers, that is likely a node with some relationships to other nodes.
 
             ## Design rules for nodes
             - Nodes will have unique identifiers.
-            - Nodes _may_ have identifiers that are used as reference relationships.
-            
+            - Nodes _may_ have "foreign key" identifiers that indicate relationships.
+
             ## Design rules for relationships
+
             Relationships appear in two ways: full relationships and reference relationships.
 
             ### Full relationships
             - Full relationships appear in dedicated relationship files, often having a filename that references two entities
-            - Full relationships typically have references to a source and destination node.
+            - These represent many-to-many relationships.
+            - Full relationships typically have foreign key references to a source and destination entity.
             - Full relationships _do not have_ unique identifiers, but instead have references to the primary keys of the source and destination nodes.
             - The absence of a single, unique identifier is a strong indicator that a file is a full relationship.
 
             ### Reference relationships
             - Reference relationships appear as foreign key references in node files
+            - These represent one-to-one or many-to-one relationships.
             - Reference relationship foreign key column names often hint at the destination node and relationship type
             - References may be hierarchical container relationships, with terminology revealing parent-child, "has", "contains", membership, or similar relationship
             - References may be peer relationships, that is often a self-reference to a similar class of nodes. For example, "knows" or "see also"
+                            
+            ### Relationship or Entity?
+            For full, many-to-many relationships, it sometimes makes sense to have that "relationship" exist in the schema as an entity in and of itself.
+            This is the case when the "relationship" has properties/fields of it's own. e.g. relationship PURCHASED between USER and PRODUCT might have fields (DATE, PAYMENT_METHOD etc.) so
+            may be best off as it's own entity, with relationships tying it to the USER and the PRODUCTS.
+
+            ## ADDITIONAL POINTS
+            - This is a graph database, not a relational database schema. Entities should be connected solely through relationships, not through foreign key reference fields. Thus any foreign key fields in the CSV files should be omitted from the graph database schema.
+            - For any entity type, assume that the "<entity>_id" field is the unique identifier field.
             """),
             debug_mode=True,
         )
@@ -112,10 +124,10 @@ class SchemaCriticLoop():
             You are an expert at knowledge graph schema design. Your task is to critique the proposed knowledge graph schema put forth by a proposal agent.
             
             A knowledge graph schema consists of 2 lists:
-                - a list of entity types (nodes) (e.g. Person, Company, Product)
-                - a list of relationship types (edges). Each relationship type is a list of [SOURCE_ENTITY_TYPE, RELATIONSHIP_TYPE, DESTINATION_ENTITY_TYPE], 
-                    thus specifying the concerned entity types as well as the nature of the relationship itself.
-                    e.g. [Person, WORKS_AT, Company], [Product, MANUFACTURED_BY, Company]
+            - a list of entity types (nodes) (e.g. Person, Company, Product). These have fields/attributes (e.g. for Person, fields could be name, age, address).
+            - a list of relationship types (edges). Each relationship type is represented by 3 components: SOURCE_ENTITY_TYPE, RELATIONSHIP_TYPE, DESTINATION_ENTITY_TYPE;
+                thus specifying the concerned entity types as well as the nature of the relationship itself. e.g. [Person, WORKS_AT, Company], [Product, MANUFACTURED_BY, Company].
+                Relationships do not have their own fields/attribute lists.
 
             The proposed schema should be evaulated against the user goal (provided as an input) to determine it's alignment with the user's objective.
             The knowledge graph will be created from some CSV files. The first 11 rows of each file (the first row being column headings) will be provided to you, 
@@ -126,6 +138,49 @@ class SchemaCriticLoop():
 
             When providing feedback, aim to be concise and specific: clearly mention any suggested changes, and do not provide generic feedback.
             Do not provide any positive/affirmative feedback - only suggest changes or state "APPROVED".
+            
+            # SCHEMA RULES & GUIDANCE
+            Every file in the approved files list will become either a node or a relationship. Determining whether a file likely represents a node or a relationship is based on a hint from the filename
+            (is it a single thing or two things) and the identifiers found within the file. Because unique identifiers are so important for determining the structure of the graph, 
+            always verify the uniqueness of suspected unique identifiers by examining the file samples.
+
+            The resulting schema should be a connected graph, with no isolated components.
+
+            ## General guidance for identifying a node or a relationship
+            - If the file name is singular and has only 1 unique identifier it is likely a node
+            - If the file name is a combination of two things, it is likely a full relationship
+            - If the file name sounds like a node, but there are multiple unique identifiers, that is likely a node with some relationships to other nodes.
+
+            ## Design rules for nodes
+            - Nodes will have unique identifiers.
+            - Nodes _may_ have "foreign key" identifiers that indicate relationships.
+
+            ## Design rules for relationships
+
+            Relationships appear in two ways: full relationships and reference relationships.
+
+            ### Full relationships
+            - Full relationships appear in dedicated relationship files, often having a filename that references two entities
+            - These represent many-to-many relationships.
+            - Full relationships typically have foreign key references to a source and destination entity.
+            - Full relationships _do not have_ unique identifiers, but instead have references to the primary keys of the source and destination nodes.
+            - The absence of a single, unique identifier is a strong indicator that a file is a full relationship.
+
+            ### Reference relationships
+            - Reference relationships appear as foreign key references in node files
+            - These represent one-to-one or many-to-one relationships.
+            - Reference relationship foreign key column names often hint at the destination node and relationship type
+            - References may be hierarchical container relationships, with terminology revealing parent-child, "has", "contains", membership, or similar relationship
+            - References may be peer relationships, that is often a self-reference to a similar class of nodes. For example, "knows" or "see also"
+                                
+            ### Relationship or Entity?
+            For full, many-to-many relationships, it sometimes makes sense to have that "relationship" exist in the schema as an entity in and of itself.
+            This is the case when the "relationship" has properties/fields of it's own. e.g. relationship PURCHASED between USER and PRODUCT might have fields (DATE, PAYMENT_METHOD etc.) so
+            may be best off as it's own entity, with relationships tying it to the USER and the PRODUCTS.
+
+            ## ADDITIONAL POINTS
+            - This is a graph database, not a relational database schema. Entities should be connected solely through relationships, not through foreign key reference fields. Thus any foreign key fields in the CSV files should be omitted from the graph database schema.
+            - For any entity type, assume that the "<entity>_id" field is the unique identifier field.
             """),
             debug_mode=True
         )
@@ -153,6 +208,10 @@ class SchemaCriticLoop():
             state: SchemaCriticLoop.LoopState = self.last_iteration_output_content 
 
         response = await self.proposal_agent.arun(state)
+
+        with open("/Users/devinsidhu/Documents/RAG_graph_constructor/src/tests/log.txt", "a") as f:
+            f.write(f"{response.content.model_dump_json(indent=2)}\n\n --------------------------------------------------------------\n\n")
+
         return StepOutput(
             content=self.LoopState(
                 file_samples=state.file_samples,
@@ -167,6 +226,9 @@ class SchemaCriticLoop():
         state: SchemaCriticLoop.LoopState = step_input.get_step_output('propose-schema').content
         response = await self.critic_agent.arun(state)
         feedback: str = response.content
+
+        with open("/Users/devinsidhu/Documents/RAG_graph_constructor/src/tests/log.txt", "a") as f:
+            f.write(f"{feedback}\n\n --------------------------------------------------------------\n\n")
 
         output_state = self.LoopState(
             file_samples=state.file_samples,
